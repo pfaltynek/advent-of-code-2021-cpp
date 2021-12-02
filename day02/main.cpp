@@ -21,6 +21,7 @@ class AoC2021_day02 : public AoC {
 
   private:
 	int64_t navigate_course();
+	int64_t navigate_course_with_aim();
 	std::vector<course_command> course_;
 };
 
@@ -77,6 +78,33 @@ int64_t AoC2021_day02::navigate_course() {
 	return result;
 }
 
+int64_t AoC2021_day02::navigate_course_with_aim() {
+	COORD3D pos{};
+	int64_t result;
+
+	for (size_t i = 0; i < course_.size(); i++) {
+		switch (course_[i].first) {
+			case direction_t::DIR_DWN:
+				pos.z += course_[i].second;
+				break;
+			case direction_t::DIR_UP:
+				pos.z -= course_[i].second;
+				break;
+			case direction_t::DIR_FWD:
+				pos.x += course_[i].second;
+				pos.y += course_[i].second * pos.z;
+				break;
+			default:
+				return -1;
+				break;
+		}
+	}
+
+	result = pos.x * pos.y;
+
+	return result;
+}
+
 int32_t AoC2021_day02::get_aoc_day() {
 	return 2;
 }
@@ -89,7 +117,8 @@ void AoC2021_day02::tests() {
 	int64_t result;
 
 	if (init({"forward 5", "down 5", "forward 8", "up 3", "down 8", "forward 2"})) {
-		result = navigate_course(); // 150
+		result = navigate_course();			 // 150
+		result = navigate_course_with_aim(); // 900
 	}
 }
 
@@ -106,7 +135,7 @@ bool AoC2021_day02::part1() {
 bool AoC2021_day02::part2() {
 	int64_t result = 0;
 
-	result = navigate_course();
+	result = navigate_course_with_aim();
 
 	result2_ = std::to_string(result);
 
