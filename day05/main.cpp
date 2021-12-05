@@ -19,7 +19,7 @@ class AoC2021_day05 : public AoC {
 
   private:
 	std::vector<line_def> lines_;
-	int64_t get_lines_overlap_points_count();
+	int64_t get_lines_overlap_points_count(const bool part2);
 };
 
 bool AoC2021_day05::init(const std::vector<std::string> lines) {
@@ -39,9 +39,11 @@ bool AoC2021_day05::init(const std::vector<std::string> lines) {
 	return true;
 }
 
-int64_t AoC2021_day05::get_lines_overlap_points_count() {
+int64_t AoC2021_day05::get_lines_overlap_points_count(const bool part2) {
 	std::map<COORD2D, uint32_t> points;
 	int64_t result = 0;
+	int32_t dx, dy, points_cnt;
+	COORD2D coord;
 
 	for (size_t i = 0; i < lines_.size(); i++) {
 		if (lines_[i].first.x == lines_[i].second.x) {
@@ -51,6 +53,33 @@ int64_t AoC2021_day05::get_lines_overlap_points_count() {
 		} else if (lines_[i].first.y == lines_[i].second.y) {
 			for (int32_t x = std::min(lines_[i].first.x, lines_[i].second.x); x <= std::max(lines_[i].first.x, lines_[i].second.x); x++) {
 				points[{x, lines_[i].first.y}]++;
+			}
+		} else if (part2) {
+			if (lines_[i].first.x < lines_[i].second.x) {
+				dx = 1;
+				points_cnt = lines_[i].second.x - lines_[i].first.x;
+
+				if (lines_[i].first.y < lines_[i].second.y) {
+					dy = 1;
+				} else {
+					dy = -1;
+				}
+			} else {
+				dx = -1;
+				points_cnt = lines_[i].first.x - lines_[i].second.x;
+
+				if (lines_[i].first.y < lines_[i].second.y) {
+					dy = 1;
+				} else {
+					dy = -1;
+				}
+			}
+
+			for (int32_t j = 0; j <= points_cnt; j++) {
+				coord = lines_[i].first;
+				coord.x += dx * j;
+				coord.y += dy * j;
+				points[coord]++;
 			}
 		}
 	}
@@ -76,14 +105,15 @@ void AoC2021_day05::tests() {
 	int64_t result;
 
 	if (init({"0,9 -> 5,9", "8,0 -> 0,8", "9,4 -> 3,4", "2,2 -> 2,1", "7,0 -> 7,4", "6,4 -> 2,0", "0,9 -> 2,9", "3,4 -> 1,4", "0,0 -> 8,8", "5,5 -> 8,2"})) {
-		result = get_lines_overlap_points_count(); // 5
+		result = get_lines_overlap_points_count(false); // 5
+		result = get_lines_overlap_points_count(true);	// 12
 	}
 }
 
 bool AoC2021_day05::part1() {
 	int64_t result = 0;
 
-	result = get_lines_overlap_points_count();
+	result = get_lines_overlap_points_count(false);
 
 	result1_ = std::to_string(result);
 
@@ -93,7 +123,7 @@ bool AoC2021_day05::part1() {
 bool AoC2021_day05::part2() {
 	int64_t result = 0;
 
-	result = get_lines_overlap_points_count();
+	result = get_lines_overlap_points_count(true);
 
 	result2_ = std::to_string(result);
 
