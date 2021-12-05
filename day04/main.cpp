@@ -7,6 +7,7 @@ const std::regex C_REGEX_BINGO_LINE("^ ?(\\d+) {1,2}(\\d+) {1,2}(\\d+) {1,2}(\\d
 const uint8_t C_BINGO_BOARD_COL_SIZE = 5;
 const uint8_t C_BINGO_BOARD_ROW_SIZE = 5;
 const uint8_t C_BINGO_BOARD_SIZE = C_BINGO_BOARD_ROW_SIZE * C_BINGO_BOARD_COL_SIZE;
+
 class bingo_board {
   private:
 	std::vector<uint8_t> numbers_;
@@ -47,23 +48,27 @@ class bingo_board {
 		std::fill(states_.begin(), states_.end(), false);
 	}
 
-	bool number_drawn(const uint8_t num, int64_t& result) {
+	int64_t get_remaining_sum() {
+		int64_t result = 0;
+
+		for (size_t i = 0; i < states_.size(); i++) {
+			if (!states_[i]) {
+				result += numbers_[i];
+			}
+		}
+
+		return result;
+	}
+
+	bool number_drawn(const uint8_t num) {
 		uint8_t index;
 
 		std::vector<uint8_t>::iterator it = std::find(numbers_.begin(), numbers_.end(), num);
-
-		result = 0;
 
 		if (it != numbers_.end()) {
 			index = it - numbers_.begin();
 			states_[index] = true;
 			if (check_col(index % C_BINGO_BOARD_ROW_SIZE) || check_row(index / C_BINGO_BOARD_ROW_SIZE)) {
-				for (size_t i = 0; i < states_.size(); i++) {
-					if (!states_[i]) {
-						result += numbers_[i];
-					}
-				}
-
 				return true;
 			}
 		}
@@ -85,6 +90,7 @@ class AoC2021_day04 : public AoC {
 	std::vector<uint8_t> numbers_;
 	std::vector<bingo_board> boards_;
 	int64_t play_bingo();
+	int64_t play_bingo_till_last_board_remains();
 };
 
 bool AoC2021_day04::init(const std::vector<std::string> lines) {
@@ -149,12 +155,39 @@ bool AoC2021_day04::init(const std::vector<std::string> lines) {
 }
 
 int64_t AoC2021_day04::play_bingo() {
-	int64_t result;
-
 	for (size_t i = 0; i < numbers_.size(); i++) {
 		for (size_t j = 0; j < boards_.size(); j++) {
-			if (boards_[j].number_drawn(numbers_[i], result)) {
-				return result * numbers_[i];
+			if (boards_[j].number_drawn(numbers_[i])) {
+				return boards_[j].get_remaining_sum() * numbers_[i];
+			}
+		}
+	}
+
+	return 0;
+}
+
+int64_t AoC2021_day04::play_bingo_till_last_board_remains() {
+	std::vector<uint8_t> boards;
+	size_t board_idx;
+
+	for (size_t i = 0; i < boards_.size(); i++) {
+		boards.push_back(i);
+		boards_[i].reset();
+	}
+
+	for (size_t i = 0; i < numbers_.size(); i++) {
+		board_idx = 0;
+
+		while (board_idx < boards.size()) {
+			if (boards_[boards[board_idx]].number_drawn(numbers_[i])) {
+				if (boards.size() == 1) {
+					return boards_[boards[0]].get_remaining_sum() * numbers_[i];
+				}
+
+				boards.erase(boards.begin() + board_idx);
+			}
+			else {
+				board_idx++;
 			}
 		}
 	}
@@ -176,7 +209,8 @@ void AoC2021_day04::tests() {
 	if (init({"7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1", "", "22 13 17 11  0", " 8  2 23  4 24", "21  9 14 16  7",
 			  " 6 10  3 18  5", " 1 12 20 15 19", "", " 3 15  0  2 22", " 9 18 13 17  5", "19  8  7 25 23", "20 11 10 24  4", "14 21 16 12  6", "",
 			  "14 21 17 24  4", "10 16 15  9 19", "18  8 23 26 20", "22 11 13  6  5", " 2  0 12  3  7"})) {
-		result = play_bingo(); // 4512
+		result = play_bingo();						   // 4512
+		result = play_bingo_till_last_board_remains(); // 1924
 	}
 }
 
@@ -193,7 +227,7 @@ bool AoC2021_day04::part1() {
 bool AoC2021_day04::part2() {
 	int64_t result = 0;
 
-	result = play_bingo();
+	result = play_bingo_till_last_board_remains();
 
 	result2_ = std::to_string(result);
 
