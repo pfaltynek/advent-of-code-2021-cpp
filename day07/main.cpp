@@ -17,7 +17,7 @@ class AoC2021_day07 : public AoC {
 
   private:
 	std::vector<uint16_t> crab_positions_;
-	int64_t find_cheapest_position();
+	int64_t find_cheapest_position(const bool part2);
 };
 
 bool AoC2021_day07::init(const std::vector<std::string> lines) {
@@ -40,12 +40,13 @@ bool AoC2021_day07::init(const std::vector<std::string> lines) {
 	return true;
 }
 
-int64_t AoC2021_day07::find_cheapest_position() {
+int64_t AoC2021_day07::find_cheapest_position(const bool part2) {
 	std::map<uint16_t, uint16_t> counts;
 	uint16_t highest = 0;
 	std::vector<uint16_t> positions;
-	int64_t lowest_fuel, tmp, tmp2;
+	int64_t lowest_fuel, tmp, tmp2, tmp3;
 	uint16_t min, max;
+	std::map<uint16_t, int64_t> fuels;
 
 	for (size_t j = 0; j < crab_positions_.size(); j++) {
 		counts[crab_positions_[j]]++;
@@ -66,12 +67,26 @@ int64_t AoC2021_day07::find_cheapest_position() {
 	min = *std::min_element(crab_positions_.begin(), crab_positions_.end());
 	max = *std::max_element(crab_positions_.begin(), crab_positions_.end());
 
+	if (part2) {
+		tmp3 = 0;
+		for (size_t i = 0; i <= max; i++) {
+			tmp3 += i;
+			fuels[i] = tmp3;
+		}
+	}
+
 	for (size_t i = min; i <= max; i++) {
 		tmp = 0;
 		for (auto it = counts.begin(); it != counts.end(); it++) {
 			tmp2 = static_cast<int64_t>(it->first);
 			tmp2 -= static_cast<int64_t>(i);
-			tmp += std::abs(tmp2) * it->second;
+			tmp2 = std::abs(tmp2);
+
+			if (part2) {
+				tmp += fuels[tmp2] * it->second;
+			} else {
+				tmp += tmp2 * it->second;
+			}
 		}
 
 		if (i == min) {
@@ -81,7 +96,7 @@ int64_t AoC2021_day07::find_cheapest_position() {
 		}
 	}
 
-	return lowest_fuel; // 110416 < ? < 457552
+	return lowest_fuel;
 }
 
 int32_t AoC2021_day07::get_aoc_day() {
@@ -96,14 +111,15 @@ void AoC2021_day07::tests() {
 	int64_t result;
 
 	if (init({"16,1,2,0,4,2,7,1,2,14"})) {
-		result = find_cheapest_position(); // 37
+		result = find_cheapest_position(false); // 37
+		result = find_cheapest_position(true);	// 168
 	}
 }
 
 bool AoC2021_day07::part1() {
 	int64_t result = 0;
 
-	result = find_cheapest_position();
+	result = find_cheapest_position(false);
 
 	result1_ = std::to_string(result);
 
@@ -113,7 +129,7 @@ bool AoC2021_day07::part1() {
 bool AoC2021_day07::part2() {
 	int64_t result = 0;
 
-	result = find_cheapest_position();
+	result = find_cheapest_position(true);
 
 	result2_ = std::to_string(result);
 
