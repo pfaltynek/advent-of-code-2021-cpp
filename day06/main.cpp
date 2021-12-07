@@ -90,7 +90,7 @@ int64_t AoC2021_day06::simulate_life_of_days_simple(const size_t days) {
 }
 
 int32_t AoC2021_day06::get_aoc_day() {
-	return 5;
+	return 6;
 }
 
 int32_t AoC2021_day06::get_aoc_year() {
