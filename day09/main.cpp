@@ -171,7 +171,7 @@ int64_t AoC2021_day09::get_basin_size(const coord_str pos) const {
 }
 
 int32_t AoC2021_day09::get_aoc_day() {
-	return 8;
+	return 9;
 }
 
 int32_t AoC2021_day09::get_aoc_year() {

@@ -132,7 +132,7 @@ int64_t AoC2021_day10::find_middle_score() const {
 }
 
 int32_t AoC2021_day10::get_aoc_day() {
-	return 8;
+	return 10;
 }
 
 int32_t AoC2021_day10::get_aoc_year() {
