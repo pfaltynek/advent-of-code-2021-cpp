@@ -7,7 +7,11 @@
 const std::string C_START = "start";
 const std::string C_END = "end";
 
-typedef std::pair<std::string, std::string> q_state;
+struct q_state {
+	std::string current;
+	std::string path;
+	std::string twice;
+};
 
 class AoC2021_day12 : public AoC {
   protected:
@@ -22,7 +26,7 @@ class AoC2021_day12 : public AoC {
 	std::map<std::string, std::vector<std::string>> edges_;
 	std::set<std::string> lower_;
 	bool is_lower(const std::string cave) const;
-	int64_t find_all_paths();
+	int64_t find_all_paths(const bool part2) const;
 };
 
 bool AoC2021_day12::init(const std::vector<std::string> lines) {
@@ -71,15 +75,15 @@ bool AoC2021_day12::is_lower(const std::string cave) const {
 	return true;
 }
 
-int64_t AoC2021_day12::find_all_paths() {
+int64_t AoC2021_day12::find_all_paths(const bool part2) const {
 	std::queue<q_state> q;
 	std::vector<std::string> results;
 	q_state qs, qn;
 
 	q = {};
 
-	qs.first = C_START;
-	qs.second = "," + C_START + ",";
+	qs.current = C_START;
+	qs.path = "," + C_START + ",";
 
 	q.emplace(qs);
 
@@ -87,16 +91,25 @@ int64_t AoC2021_day12::find_all_paths() {
 		qs = q.front();
 		q.pop();
 
-		for (size_t i = 0; i < edges_[qs.first].size(); i++) {
+		for (size_t i = 0; i < edges_.at(qs.current).size(); i++) {
 			qn = qs;
-			qn.first = edges_[qs.first][i];
-			qn.second += qn.first + ",";
+			qn.current = edges_.at(qs.current)[i];
+			qn.path += qn.current + ",";
 
-			if (lower_.count(qn.first)) {
-				if (qs.second.find("," + qn.first + ",") == std::string::npos) {
-					if (qn.first == C_END) {
-						results.push_back(qn.second);
+			if (lower_.count(qn.current)) {
+				if (qn.current == C_START) {
+					continue;
+				}
+
+				if (qs.path.find("," + qn.current + ",") == std::string::npos) {
+					if (qn.current == C_END) {
+						results.push_back(qn.path);
 					} else {
+						q.emplace(qn);
+					}
+				} else if (part2) {
+					if (qn.twice.empty()) {
+						qn.twice = qn.current;
 						q.emplace(qn);
 					}
 				}
@@ -121,7 +134,7 @@ void AoC2021_day12::tests() {
 	int64_t result;
 
 	if (init({"start-A", "start-b", "A-c", "A-b", "b-d", "A-end", "b-end"})) {
-		result = find_all_paths(); // 10
+		result = find_all_paths(false); // 10
 		/*
 			start,A,b,A,c,A,end
 			start,A,b,A,end
@@ -133,11 +146,12 @@ void AoC2021_day12::tests() {
 			start,b,A,c,A,end
 			start,b,A,end
 			start,b,end
-*/
+		*/
+		result = find_all_paths(true); // 36
 	}
 
 	if (init({"dc-end", "HN-start", "start-kj", "dc-start", "dc-HN", "LN-dc", "HN-end", "kj-sa", "kj-HN", "kj-dc"})) {
-		result = find_all_paths(); // 19
+		result = find_all_paths(false); // 19
 		/*
 			start,HN,dc,HN,end
 			start,HN,dc,HN,kj,HN,end
@@ -158,18 +172,21 @@ void AoC2021_day12::tests() {
 			start,kj,HN,end
 			start,kj,dc,HN,end
 			start,kj,dc,end
-*/	}
+		*/
+		result = find_all_paths(true); // 103
+	}
 
-		if (init({"fs-end", "he-DX", "fs-he", "start-DX", "pj-DX", "end-zg", "zg-sl", "zg-pj", "pj-he", "RW-he", "fs-DX", "pj-RW", "zg-RW", "start-pj", "he-WI",
-				  "zg-he", "pj-fs", "start-RW"})) {
-			result = find_all_paths(); // 226 paths
-		}
+	if (init({"fs-end", "he-DX", "fs-he", "start-DX", "pj-DX", "end-zg", "zg-sl", "zg-pj", "pj-he", "RW-he", "fs-DX", "pj-RW", "zg-RW", "start-pj", "he-WI",
+			  "zg-he", "pj-fs", "start-RW"})) {
+		result = find_all_paths(false); // 226
+		result = find_all_paths(true);	// 3509
+	}
 }
 
 bool AoC2021_day12::part1() {
 	int64_t result = 0;
 
-	result = find_all_paths();
+	result = find_all_paths(false);
 
 	result1_ = std::to_string(result);
 
@@ -179,7 +196,7 @@ bool AoC2021_day12::part1() {
 bool AoC2021_day12::part2() {
 	int64_t result = 0;
 
-	result = find_all_paths();
+	result = find_all_paths(true);
 
 	result2_ = std::to_string(result);
 
