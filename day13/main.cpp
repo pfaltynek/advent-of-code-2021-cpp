@@ -7,7 +7,7 @@ const std::regex C_COORD("^(\\d+),(\\d+)$");
 const std::regex C_FOLD_X("^fold along x=(\\d+)$");
 const std::regex C_FOLD_Y("^fold along y=(\\d+)$");
 
-typedef std::pair<bool, uint32_t> fold_info;
+typedef std::pair<bool, int32_t> fold_info;
 
 class AoC2021_day13 : public AoC {
   protected:
@@ -21,7 +21,8 @@ class AoC2021_day13 : public AoC {
   private:
 	std::map<coord_str, bool> dots_;
 	std::vector<fold_info> fold_infos_;
-	int64_t get_dots_count_after_folds(const uint32_t folds_count);
+	int64_t get_dots_count_after_folds(const int32_t folds_count);
+	std::string print();
 };
 
 bool AoC2021_day13::init(const std::vector<std::string> lines) {
@@ -39,9 +40,9 @@ bool AoC2021_day13::init(const std::vector<std::string> lines) {
 
 		if (folds) {
 			if (std::regex_match(lines[i], sm, C_FOLD_X)) {
-				fold_infos_.push_back({true, static_cast<uint32_t>(std::stoi(sm.str(1)))});
+				fold_infos_.push_back({true, static_cast<int32_t>(std::stoi(sm.str(1)))});
 			} else if (std::regex_match(lines[i], sm, C_FOLD_Y)) {
-				fold_infos_.push_back({false, static_cast<uint32_t>(std::stoi(sm.str(1)))});
+				fold_infos_.push_back({false, static_cast<int32_t>(std::stoi(sm.str(1)))});
 			} else {
 				std::cout << "Invalid fold info at line " << i + 1 << std::endl;
 				return false;
@@ -59,11 +60,18 @@ bool AoC2021_day13::init(const std::vector<std::string> lines) {
 	return true;
 }
 
-int64_t AoC2021_day13::get_dots_count_after_folds(const uint32_t folds_count) {
+int64_t AoC2021_day13::get_dots_count_after_folds(const int32_t folds_count) {
 	std::map<coord_str, bool> new_dots;
 	coord_str coord;
+	int32_t total;
 
-	for (size_t i = 0; i < folds_count; i++) {
+	total = folds_count;
+
+	if (total < 0) {
+		total = fold_infos_.size();
+	}
+
+	for (int32_t i = 0; i < total; i++) {
 		new_dots.clear();
 
 		for (auto it = dots_.begin(); it != dots_.end(); it++) {
@@ -89,6 +97,43 @@ int64_t AoC2021_day13::get_dots_count_after_folds(const uint32_t folds_count) {
 	return dots_.size();
 }
 
+std::string AoC2021_day13::print() {
+	std::string result, tmp;
+	std::vector<std::string> lines;
+	coord_str min = {INT32_MAX, INT32_MAX}, max = {INT32_MIN, INT32_MIN};
+
+	for (auto it = dots_.begin(); it != dots_.end(); it++) {
+		if (it->first.x > max.x) {
+			max.x = it->first.x;
+		}
+		if (it->first.y > max.y) {
+			max.y = it->first.y;
+		}
+		if (it->first.x < min.x) {
+			min.x = it->first.x;
+		}
+		if (it->first.y < min.y) {
+			min.y = it->first.y;
+		}
+	}
+
+	tmp.resize(max.x - min.x + 1, ' ');
+
+	for (int32_t i = min.y; i <= max.y; i++) {
+		lines.push_back(tmp);
+	}
+
+	for (auto it = dots_.begin(); it != dots_.end(); it++) {
+		lines[it->first.y - min.y][it->first.x - min.x] = '#';
+	}
+
+	for (size_t i = 0; i < lines.size(); i++) {
+		result += "\n" + lines[i];
+	}
+
+	return result;
+}
+
 int32_t AoC2021_day13::get_aoc_day() {
 	return 13;
 }
@@ -102,7 +147,8 @@ void AoC2021_day13::tests() {
 
 	if (init({"6,10", "0,14", "9,10", "0,3",  "10,4", "4,11", "6,0", "6,12",		   "4,1",			"0,13", "10,12", "3,4",
 			  "3,0",  "8,4",  "1,10", "2,14", "8,10", "9,0",  "",	 "fold along y=7", "fold along x=5"})) {
-		result = get_dots_count_after_folds(1); // 17
+		result = get_dots_count_after_folds(1);	 // 17
+		get_dots_count_after_folds(-1);
 	}
 }
 
@@ -117,11 +163,10 @@ bool AoC2021_day13::part1() {
 }
 
 bool AoC2021_day13::part2() {
-	int64_t result = 0;
 
-	result = get_dots_count_after_folds(1);
+	get_dots_count_after_folds(-1);
 
-	result2_ = std::to_string(result);
+	result2_ = print();
 
 	return true;
 }
