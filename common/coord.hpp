@@ -24,6 +24,11 @@ typedef struct COORD2D {
 		y = y_init;
 	}
 
+	inline COORD2D(const uint32_t x_init, const uint32_t y_init) {
+		x = static_cast<int32_t>(x_init);
+		y = static_cast<int32_t>(y_init);
+	}
+
 	inline COORD2D() {
 		x = 0;
 		y = 0;
