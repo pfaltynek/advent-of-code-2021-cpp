@@ -1,5 +1,6 @@
 #include "./../common/aoc.hpp"
-
+#include <algorithm>
+#include <numeric>
 class bits_stream {
   public:
 	bits_stream(const std::vector<uint8_t> message) {
@@ -14,13 +15,15 @@ class bits_stream {
 		return ver_sum_;
 	}
 
-	void decode_stream() {
-		decode_packet();
+	uint64_t decode_stream() {
+		return decode_packet();
 	}
 
   private:
-	void decode_packet() {
-		uint32_t version, type_id, literal_value, length_type_id, count, bits_count;
+	uint64_t decode_packet() {
+		uint32_t version, type_id, length_type_id, count, bits_count;
+		uint64_t packet_result, literal_value;
+		std::vector<uint64_t> params = {};
 
 		version = get_bits(3);
 		ver_sum_ += version;
@@ -29,6 +32,7 @@ class bits_stream {
 		switch (type_id) {
 			case 4: // literal value
 				literal_value = decode_literal();
+				packet_result = literal_value;
 				break;
 			default:
 				length_type_id = get_bits(1);
@@ -38,27 +42,57 @@ class bits_stream {
 					bits_count = bits_read_;
 
 					while (bits_count + count > bits_read_) {
-						decode_packet();
+						params.push_back(decode_packet());
 					}
 				} else {
 					count = get_bits(11);
 
 					for (size_t i = 0; i < count; i++) {
-						decode_packet();
+						params.push_back(decode_packet());
 					}
+				}
+
+				switch (type_id) {
+					case 0: // sum
+						packet_result = std::accumulate(params.begin(), params.end(), 0llu);
+						break;
+					case 1: // product
+						packet_result = 1;
+						for (size_t i = 0; i < params.size(); i++) {
+							packet_result *= params[i];
+						}
+						break;
+					case 2: // minimum
+						packet_result = *std::min_element(params.begin(), params.end());
+						break;
+					case 3: // maximum
+						packet_result = *std::max_element(params.begin(), params.end());
+						break;
+					case 5: // greater than
+						packet_result = (params[0] > params[1]) ? 1 : 0;
+						break;
+					case 6: // less than
+						packet_result = (params[0] < params[1]) ? 1 : 0;
+						break;
+					case 7: // equal to
+						packet_result = (params[0] == params[1]) ? 1 : 0;
+						break;
 				}
 				break;
 		}
+
+		return packet_result;
 	}
 
-	uint32_t decode_literal() {
-		uint32_t start_bit = 0, value, result = 0;
+	uint64_t decode_literal() {
+		uint32_t start_bit = 0, value;
+		uint64_t result = 0;
 
 		do {
 			start_bit = get_bits(1);
 			value = get_bits(4);
 			result = result << 4;
-			result |= value;
+			result |= static_cast<uint64_t>(value);
 		} while (start_bit != 0);
 
 		return result;
@@ -202,6 +236,46 @@ void AoC2021_day16::tests() {
 		bs.decode_stream();
 		result = bs.get_version_sum(); // 31
 	}
+
+	if (init({"C200B40A82"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // finds the sum of 1 and 2, resulting in the value 3.
+	}
+
+	if (init({"04005AC33890"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // finds the product of 6 and 9, resulting in the value 54.
+	}
+
+	if (init({"880086C3E88112"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // finds the minimum of 7, 8, and 9, resulting in the value 7.
+	}
+
+	if (init({"CE00C43D881120"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // finds the maximum of 7, 8, and 9, resulting in the value 9.
+	}
+
+	if (init({"D8005AC2A8F0"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // produces 1, because 5 is less than 15.
+	}
+
+	if (init({"F600BC2D8F"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // produces 0, because 5 is not greater than 15.
+	}
+
+	if (init({"9C005AC2F8F0"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // produces 0, because 5 is not equal to 15.
+	}
+
+	if (init({"9C0141080250320F1802104A08"})) {
+		bits_stream bs(message_);
+		result = bs.decode_stream(); // produces 1, because 1 + 3 = 2 * 2.
+	}
 }
 
 bool AoC2021_day16::part1() {
@@ -219,7 +293,8 @@ bool AoC2021_day16::part1() {
 bool AoC2021_day16::part2() {
 	int64_t result = 0;
 
-	result = 0;
+	bits_stream bs(message_);
+	result = bs.decode_stream();
 
 	result2_ = std::to_string(result);
 
