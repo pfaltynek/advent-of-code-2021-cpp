@@ -26,7 +26,9 @@ class AoC2021_day18 : public AoC {
 	void explode_node(const int32_t node_idx);
 	void split_number(const int32_t node_idx, const bool left);
 	void add_pairs();
+	int32_t add_pair(const int32_t first, const int32_t second);
 	int32_t get_pair_magnitude(const int32_t idx) const;
+	int32_t get_max_add_magnitude();
 	void print() const;
 	void print_pair(const int32_t idx) const;
 	void print_node(const int32_t idx) const;
@@ -117,17 +119,7 @@ void AoC2021_day18::add_pairs() {
 		part1 = roots_[0];
 
 		for (size_t i = 1; i < roots_.size(); i++) {
-			new_root = idx_;
-			idx_--;
-
-			nodes_[new_root].left = part1;
-			nodes_[new_root].right = roots_[i];
-			nodes_[new_root].parent = 0;
-
-			nodes_[part1].parent = new_root;
-			nodes_[roots_[i]].parent = new_root;
-
-			reduce_pair(new_root);
+			new_root = add_pair(part1, roots_[i]);
 
 			part1 = new_root;
 		}
@@ -135,6 +127,36 @@ void AoC2021_day18::add_pairs() {
 		roots_.clear();
 		roots_.push_back(part1);
 	}
+}
+
+int32_t AoC2021_day18::add_pair(const int32_t first, const int32_t second) {
+	int32_t result;
+
+#if DEBUG_PRINT
+	std::cout << std::endl << "----------" << std::endl;
+#endif
+
+	std::cout << "1: ";
+	print_pair(first);
+	std::cout << "2: ";
+	print_pair(second);
+
+	result = idx_;
+	idx_--;
+
+	nodes_[result].left = first;
+	nodes_[result].right = second;
+	nodes_[result].parent = 0;
+
+	nodes_[first].parent = result;
+	nodes_[second].parent = result;
+
+	reduce_pair(result);
+
+	std::cout << "R: ";
+	print_pair(result);
+
+	return result;
 }
 
 void AoC2021_day18::reduce_pair(const int32_t node_idx) {
@@ -318,6 +340,30 @@ int32_t AoC2021_day18::get_pair_magnitude(const int32_t idx) const {
 	return result;
 }
 
+int32_t AoC2021_day18::get_max_add_magnitude() {
+	int32_t result = 0, magnitude, idx;
+	std::map<int32_t, node_str> nodes_backup;
+
+	for (size_t i = 0; i < roots_.size(); i++) {
+		for (size_t j = 0; j < roots_.size(); j++) {
+			if (i != j) {
+				nodes_backup = nodes_;
+
+				idx = add_pair(roots_[i], roots_[j]);
+				magnitude = get_pair_magnitude(idx);
+
+				nodes_ = nodes_backup;
+
+				if (magnitude > result) {
+					result = magnitude;
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
 void AoC2021_day18::print() const {
 #if DEBUG_PRINT
 	std::cout << std::endl;
@@ -389,7 +435,6 @@ int32_t AoC2021_day18::get_aoc_year() {
 
 void AoC2021_day18::tests() {
 	int64_t result;
-
 	if (init({"[1,2]", "[[1,2],3]", "[9,[8,7]]", "[[1,9],[8,5]]", "[[[[1,2],[3,4]],[[5,6],[7,8]]],9]", "[[[9,[3,8]],[[0,9],6]],[[[3,7],[4,9]],3]]",
 			  "[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]"})) {
 
@@ -478,16 +523,29 @@ void AoC2021_day18::tests() {
 			  "[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]", "[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]", "[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]",
 			  "[[[[5,4],[7,7]],8],[[8,3],8]]", "[[9,3],[[9,9],[6,[4,9]]]]", "[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]",
 			  "[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"})) {
-		add_pairs(); // "[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]""
+		add_pairs();							// "[[[[6,6],[7,6]],[[7,7],[7,0]]],[[[7,7],[7,7]],[[7,8],[9,9]]]]""
 		result = get_pair_magnitude(roots_[0]); // 4140.
+	}
+
+	if (init({"[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]", "[[[5,[2,8]],4],[5,[[9,9],0]]]", "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]",
+			  "[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]", "[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]", "[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]",
+			  "[[[[5,4],[7,7]],8],[[8,3],8]]", "[[9,3],[[9,9],[6,[4,9]]]]", "[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]",
+			  "[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]"})) {
+		result = get_max_add_magnitude(); // 3993
 	}
 }
 
 bool AoC2021_day18::part1() {
 	int64_t result = 0;
+	std::map<int32_t, node_str> backup = nodes_;
+	std::vector<int32_t> backupr = roots_;
 
 	add_pairs();
+
 	result = get_pair_magnitude(roots_[0]);
+
+	nodes_ = backup;
+	roots_ = backupr;
 
 	result1_ = std::to_string(result);
 
@@ -496,6 +554,8 @@ bool AoC2021_day18::part1() {
 
 bool AoC2021_day18::part2() {
 	int64_t result = 0;
+
+	result = get_max_add_magnitude();
 
 	result2_ = std::to_string(result);
 
