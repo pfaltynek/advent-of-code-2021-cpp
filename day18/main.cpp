@@ -134,12 +134,12 @@ int32_t AoC2021_day18::add_pair(const int32_t first, const int32_t second) {
 
 #if DEBUG_PRINT
 	std::cout << std::endl << "----------" << std::endl;
-#endif
 
 	std::cout << "1: ";
 	print_pair(first);
 	std::cout << "2: ";
 	print_pair(second);
+#endif
 
 	result = idx_;
 	idx_--;
@@ -153,8 +153,10 @@ int32_t AoC2021_day18::add_pair(const int32_t first, const int32_t second) {
 
 	reduce_pair(result);
 
+#if DEBUG_PRINT
 	std::cout << "R: ";
 	print_pair(result);
+#endif
 
 	return result;
 }
@@ -406,6 +408,7 @@ void AoC2021_day18::print_single_pair(const std::string prefix, const int32_t id
 }
 
 void AoC2021_day18::print_node(const int32_t idx) const {
+#if DEBUG_PRINT
 	std::cout << "[";
 
 	if (nodes_.at(idx).left < 0) {
@@ -423,6 +426,7 @@ void AoC2021_day18::print_node(const int32_t idx) const {
 	}
 
 	std::cout << "]";
+#endif
 }
 
 int32_t AoC2021_day18::get_aoc_day() {
