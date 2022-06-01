@@ -47,7 +47,7 @@ const coord_str coord_step_south_west = {-1, 1};
 typedef struct COORD3D {
 	int32_t x, y, z;
 
-	inline bool const operator==(const COORD3D& o) {
+	inline bool const operator==(const COORD3D& o) const {
 		return x == o.x && y == o.y && z == o.z;
 	}
 
@@ -55,8 +55,67 @@ typedef struct COORD3D {
 		return (l.y < y || (l.y == y && l.x < x) || ((l.y == y && l.x == x && l.z < z)));
 	}
 
-	inline COORD3D operator+(const COORD3D& o) {
+	inline COORD3D operator+(const COORD3D& o) const {
 		return {x + o.x, y + o.y, z + o.z};
+	}
+
+	inline COORD3D operator-(const COORD3D& o) const {
+		return {x - o.x, y - o.y, z - o.z};
+	}
+
+	inline COORD3D rotate(size_t index) {
+		switch (index) {
+			case 0:
+				return COORD3D{x, y, z};
+			case 1:
+				return COORD3D{x, -z, y};
+			case 2:
+				return COORD3D{x, -y, -z};
+			case 3:
+				return COORD3D{x, z, -y};
+			case 4:
+				return COORD3D{-y, x, z};
+			case 5:
+				return COORD3D{z, x, y};
+			case 6:
+				return COORD3D{y, x, -z};
+			case 7:
+				return COORD3D{-z, x, -y};
+			case 8:
+				return COORD3D{-x, -y, z};
+			case 9:
+				return COORD3D{-x, -z, -y};
+			case 10:
+				return COORD3D{-x, y, -z};
+			case 11:
+				return COORD3D{-x, z, y};
+			case 12:
+				return COORD3D{y, -x, z};
+			case 13:
+				return COORD3D{z, -x, -y};
+			case 14:
+				return COORD3D{-y, -x, -z};
+			case 15:
+				return COORD3D{-z, -x, y};
+			case 16:
+				return COORD3D{-z, y, x};
+			case 17:
+				return COORD3D{y, z, x};
+			case 18:
+				return COORD3D{z, -y, x};
+			case 19:
+				return COORD3D{-y, -z, x};
+			case 20:
+				return COORD3D{-z, -y, -x};
+			case 21:
+				return COORD3D{-y, z, -x};
+			case 22:
+				return COORD3D{z, y, -x};
+			case 23:
+				return COORD3D{y, -z, -x};
+			default:
+				return COORD3D{x, y, z};
+		}
 	}
 
 	inline COORD3D(const int32_t x_init, const int32_t y_init, const int32_t z_init) {
@@ -73,6 +132,10 @@ typedef struct COORD3D {
 
 	inline int32_t size() {
 		return abs(x) + abs(y) + abs(z);
+	}
+
+	std::string to_string() {
+		return "[" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + "]";
 	}
 } coord_3d_str;
 
@@ -149,7 +212,7 @@ typedef struct COORD4D {
 							continue;
 						}
 
-						result.push_back({x,y,z,w});
+						result.push_back({x, y, z, w});
 					}
 				}
 			}
