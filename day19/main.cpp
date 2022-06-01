@@ -168,20 +168,18 @@ class AoC2021_day19 : public AoC {
 
   private:
 	std::map<int32_t, std::vector<coord_3d_str>> data_;
+	std::map<int32_t, coord_3d_str> scanner_positions_;
 	distances_rotated_all_t prepare_pt2pt_distances_rotated() const;
 	bool are_neighbors(const distances_t& distances, const int32_t scanner1, const beacons_t& beacons, const distances_rotated_t& distances_rotated,
 					   const int32_t scanner2, coord_3d_str& relation, int32_t& rotation_id) const;
 
-	int32_t scanner_min_, scanner_max_;
-	int32_t get_beacons_count() const;
+	int32_t get_beacons_count();
+	int32_t get_ocean_size() const;
 };
 
 bool AoC2021_day19::init(const std::vector<std::string> lines) {
 	int32_t scanner = -1;
 	std::smatch sm;
-
-	scanner_min_ = INT32_MAX;
-	scanner_max_ = INT32_MIN;
 
 	data_.clear();
 
@@ -192,12 +190,6 @@ bool AoC2021_day19::init(const std::vector<std::string> lines) {
 
 		if (std::regex_match(lines[i], sm, C_REGEX_SCANNER_ID)) {
 			scanner = std::stoi(sm.str(1));
-			if (scanner > scanner_max_) {
-				scanner_max_ = scanner;
-			}
-			if (scanner < scanner_min_) {
-				scanner_min_ = scanner;
-			}
 		} else if (std::regex_match(lines[i], sm, C_REGEX_BEACON_POSITION)) {
 			data_[scanner].push_back({std::stoi(sm.str(1)), std::stoi(sm.str(2)), std::stoi(sm.str(3))});
 		} else {
@@ -315,8 +307,7 @@ bool AoC2021_day19::are_neighbors(const distances_t& distances, const int32_t sc
 	return false;
 }
 
-int32_t AoC2021_day19::get_beacons_count() const {
-	std::map<int32_t, coord_3d_str> scanner_positions = {};
+int32_t AoC2021_day19::get_beacons_count() {
 	std::map<int32_t, beacons_t> beacons_by_scanner = {};
 	std::vector<int32_t> scanners = {};
 	coord_3d_str shift_vector, tmp_coord, beacon_derotated, beacon_shifted;
@@ -327,6 +318,7 @@ int32_t AoC2021_day19::get_beacons_count() const {
 	int32_t rotation_id, to;
 	bool relation_found = false;
 	beacons.clear();
+	scanner_positions_.clear();
 
 	// get scanners IDs list
 	for (auto const& scanner : data_) {
@@ -337,7 +329,7 @@ int32_t AoC2021_day19::get_beacons_count() const {
 	const int32_t base = scanners.front();
 	scanners.erase(scanners.begin());
 
-	scanner_positions[base] = {};
+	scanner_positions_[base] = {};
 
 	beacons_by_scanner[base] = data_.at(base);
 
@@ -383,7 +375,7 @@ int32_t AoC2021_day19::get_beacons_count() const {
 			}
 		}
 		if (relation_found) {
-			scanner_positions[to] = shift_vector;
+			scanner_positions_[to] = shift_vector;
 			beacons_by_scanner[to] = data_.at(to);
 
 			for (size_t i = 0; i < data_.at(to).size(); i++) {
@@ -406,6 +398,26 @@ int32_t AoC2021_day19::get_beacons_count() const {
 	return beacons.size();
 }
 
+int32_t AoC2021_day19::get_ocean_size() const {
+	int32_t result = 0, tmp;
+
+	for (const auto& kv1 : scanner_positions_) {
+		for (const auto& kv2 : scanner_positions_) {
+			if (kv1.first == kv2.first) {
+				continue;
+			}
+
+			tmp = (kv2.second - kv1.second).size();
+
+			if (tmp > result) {
+				result = tmp;
+			}
+		}
+	}
+
+	return result;
+}
+
 int32_t AoC2021_day19::get_aoc_day() {
 	return 19;
 }
@@ -419,6 +431,7 @@ void AoC2021_day19::tests() {
 
 	if (init(C_TEST_SCANNERS_DATA)) {
 		result = get_beacons_count(); // 79
+		result = get_ocean_size(); // 3621
 	}
 }
 
@@ -434,6 +447,8 @@ bool AoC2021_day19::part1() {
 
 bool AoC2021_day19::part2() {
 	int64_t result = 0;
+
+	result = get_ocean_size();
 
 	result2_ = std::to_string(result);
 
