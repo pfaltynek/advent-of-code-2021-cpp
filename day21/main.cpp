@@ -1,10 +1,47 @@
 #include "./../common/aoc.hpp"
 #include "./../common/coord.hpp"
+#include <array>
 #include <regex>
 
 const std::regex C_PLAYER_TEMPLATE("^Player (\\d) starting position: (\\d+)$");
+const uint16_t C_PART1_LIMIT = 1000;
+const uint8_t C_PART2_LIMIT = 21;
 
-#define DEBUG_PRINT 0
+enum part2_branches_t {
+	DIRAC_111 = 3,
+	DIRAC_112 = 4,
+	DIRAC_113 = 5,
+	DIRAC_121 = 4,
+	DIRAC_122 = 5,
+	DIRAC_123 = 6,
+	DIRAC_131 = 5,
+	DIRAC_132 = 6,
+	DIRAC_133 = 7,
+
+	DIRAC_211 = 4,
+	DIRAC_212 = 5,
+	DIRAC_213 = 6,
+	DIRAC_221 = 5,
+	DIRAC_222 = 6,
+	DIRAC_223 = 7,
+	DIRAC_231 = 6,
+	DIRAC_232 = 7,
+	DIRAC_233 = 8,
+
+	DIRAC_311 = 5,
+	DIRAC_312 = 6,
+	DIRAC_313 = 7,
+	DIRAC_321 = 6,
+	DIRAC_322 = 7,
+	DIRAC_323 = 8,
+	DIRAC_331 = 7,
+	DIRAC_332 = 8,
+	DIRAC_333 = 9,
+};
+
+const std::array<uint8_t, 27> C_DIRAC_DICES = {DIRAC_111, DIRAC_112, DIRAC_113, DIRAC_121, DIRAC_122, DIRAC_123, DIRAC_131, DIRAC_132, DIRAC_133,
+											   DIRAC_211, DIRAC_212, DIRAC_213, DIRAC_221, DIRAC_222, DIRAC_223, DIRAC_231, DIRAC_232, DIRAC_233,
+											   DIRAC_311, DIRAC_312, DIRAC_313, DIRAC_321, DIRAC_322, DIRAC_323, DIRAC_331, DIRAC_332, DIRAC_333};
 
 class AoC2021_day21 : public AoC {
   protected:
@@ -17,11 +54,14 @@ class AoC2021_day21 : public AoC {
 
   private:
 	std::vector<std::tuple<uint8_t, size_t, size_t>> stats_;
+	std::map<size_t, size_t> Dirac_dices_;
 	size_t p1_start_, p2_start_;
 	size_t dice_next_, dice_rolls_;
 	size_t simulate_game();
+	size_t simulate_Dirac_dice_game();
+	void simulate_Dirac_dice_game_step(size_t p1position, size_t p2position, size_t p1score, size_t p2score, size_t multiply, bool p1on_turn, size_t& p1wins,
+									   size_t& p2wins);
 	void print() const;
-	void reset();
 	size_t get_dice_sum();
 };
 
@@ -62,14 +102,6 @@ bool AoC2021_day21::init(const std::vector<std::string> lines) {
 	return true;
 }
 
-void AoC2021_day21::reset() {
-	stats_.clear();
-	stats_.push_back(std::make_tuple(1, p1_start_ - 1, 0));
-	stats_.push_back(std::make_tuple(2, p2_start_ - 1, 0));
-	dice_next_ = 1;
-	dice_rolls_ = 0;
-}
-
 size_t AoC2021_day21::get_dice_sum() {
 	size_t result = 0;
 
@@ -87,7 +119,11 @@ size_t AoC2021_day21::simulate_game() {
 	bool finished = false;
 	uint8_t winner;
 
-	reset();
+	stats_.clear();
+	stats_.push_back(std::make_tuple(1, p1_start_ - 1, 0));
+	stats_.push_back(std::make_tuple(2, p2_start_ - 1, 0));
+	dice_next_ = 1;
+	dice_rolls_ = 0;
 
 	while (!finished) {
 		for (auto&& tuple : stats_) {
@@ -97,7 +133,7 @@ size_t AoC2021_day21::simulate_game() {
 
 			std::get<2>(tuple) += std::get<1>(tuple) + 1;
 
-			if (std::get<2>(tuple) >= 1000) {
+			if (std::get<2>(tuple) >= C_PART1_LIMIT) {
 				winner = std::get<0>(tuple);
 				finished = true;
 				break;
@@ -115,21 +151,50 @@ size_t AoC2021_day21::simulate_game() {
 	}
 }
 
-void AoC2021_day21::print() const {
-#if DEBUG_PRINT
-	for (int32_t y = top_; y <= bottom_; y++) {
-		for (int32_t x = left_; x <= right_; x++) {
-			if (image_.count({x, y}) > 0) {
-				std::cout << '#';
+void AoC2021_day21::simulate_Dirac_dice_game_step(size_t p1position, size_t p2position, size_t p1score, size_t p2score, size_t multiply, bool p1on_turn,
+												  size_t& p1wins, size_t& p2wins) {
+
+	size_t pos, score, mult;
+
+	for (const auto& kv : Dirac_dices_) {
+		mult = multiply * kv.second;
+
+		if (p1on_turn) {
+			pos = p1position + kv.first;
+			pos %= 10;
+			score = p1score + pos + 1;
+
+			if (score >= C_PART2_LIMIT) {
+				p1wins += mult;
 			} else {
-				std::cout << '.';
+				simulate_Dirac_dice_game_step(pos, p2position, score, p2score, mult, !p1on_turn, p1wins, p2wins);
+			}
+		} else {
+			pos = p2position + kv.first;
+			pos %= 10;
+			score = p2score + pos + 1;
+
+			if (score >= C_PART2_LIMIT) {
+				p2wins += mult;
+			} else {
+				simulate_Dirac_dice_game_step(p1position, pos, p1score, score, mult, !p1on_turn, p1wins, p2wins);
 			}
 		}
-		std::cout << std::endl;
 	}
-	std::cout << std::endl;
+}
 
-#endif
+size_t AoC2021_day21::simulate_Dirac_dice_game() {
+	size_t p1wins = 0, p2wins = 0;
+
+	Dirac_dices_.clear();
+
+	for (size_t i = 0; i < C_DIRAC_DICES.size(); i++) {
+		Dirac_dices_[C_DIRAC_DICES[i]]++;
+	}
+
+	simulate_Dirac_dice_game_step(p1_start_ - 1, p2_start_ - 1, 0, 0, 1, true, p1wins, p2wins);
+
+	return std::max(p1wins, p2wins);
 }
 
 int32_t AoC2021_day21::get_aoc_day() {
@@ -144,7 +209,8 @@ void AoC2021_day21::tests() {
 	int64_t result;
 
 	if (init({"Player 1 starting position: 4", "Player 2 starting position: 8"})) {
-		result = simulate_game(); // 739785
+		result = simulate_game();			 // 739785
+		result = simulate_Dirac_dice_game(); // 444356092776315
 	}
 }
 
@@ -160,6 +226,8 @@ bool AoC2021_day21::part1() {
 
 bool AoC2021_day21::part2() {
 	int64_t result = 0;
+
+	result = simulate_Dirac_dice_game();
 
 	result2_ = std::to_string(result);
 
