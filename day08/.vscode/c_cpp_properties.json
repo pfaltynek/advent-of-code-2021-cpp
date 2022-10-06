@@ -54,15 +54,15 @@
 			"intelliSenseMode": "gcc-x64",
 			"browse": {
 				"path": [
-					"c:/Tools/MinGW64/mingw64/include",
-					"c:/Tools/MinGW64/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include",
-					"c:/Tools/MinGW64/mingw64/x86_64-w64-mingw32/include",
+					"c:/tools/mingw64/include",
+					"c:/tools/mingw64/lib/gcc/x86_64-w64-mingw32/12.2.0/include",
+					"c:/tools/mingw64/x86_64-w64-mingw32/include",
 					"${workspaceRoot}"
 				],
 				"limitSymbolsToIncludedHeaders": true,
 				"databaseFilename": ""
 			},
-			"compilerPath": "C:/Tools/MinGW64/mingw64/bin/g++.exe",
+			"compilerPath": "c:/tools/mingw64/bin/g++.exe",
 			"cStandard": "c11",
 			"cppStandard": "c++17"
 		}
